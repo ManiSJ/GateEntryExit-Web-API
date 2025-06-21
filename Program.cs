@@ -1,3 +1,6 @@
+using GateEntryExit.BackgroundJobs;
+using GateEntryExit.BackgroundJobServices.Implementations;
+using GateEntryExit.BackgroundJobServices.Interfaces;
 using GateEntryExit.DatabaseContext;
 using GateEntryExit.Domain;
 using GateEntryExit.Domain.Manager;
@@ -7,6 +10,8 @@ using GateEntryExit.Repositories;
 using GateEntryExit.Repositories.Interfaces;
 using GateEntryExit.Service.Cache;
 using GateEntryExit.Service.Token;
+using Hangfire;
+using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +20,6 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Sinks.Elasticsearch;
-using System;
 using System.Reflection;
 using System.Text;
 
@@ -81,24 +85,35 @@ builder.Services.AddDbContext<GateEntryExitDbContext>(options =>
 builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<GateEntryExitDbContext>()
 .AddDefaultTokenProviders();
 
-builder.Services.AddTransient<IGateRepository, GateRepository>();
-builder.Services.AddTransient<IGateManager, GateManager>();
+builder.Services.AddScoped<IGateRepository, GateRepository>();
+builder.Services.AddScoped<IGateManager, GateManager>();
 
-builder.Services.AddTransient<IGateEntryRepository, GateEntryRepository>();
-builder.Services.AddTransient<IGateEntryManager, GateEntryManager>();
+builder.Services.AddScoped<IGateEntryRepository, GateEntryRepository>();
+builder.Services.AddScoped<IGateEntryManager, GateEntryManager>();
 
-builder.Services.AddTransient<IGateExitRepository, GateExitRepository>();
-builder.Services.AddTransient<IGateExitManager, GateExitManager>();
+builder.Services.AddScoped<IGateExitRepository, GateExitRepository>();
+builder.Services.AddScoped<IGateExitManager, GateExitManager>();
 
-builder.Services.AddTransient<ISensorRepository, SensorRepository>();
-builder.Services.AddTransient<ISensorManager, SensorManager>();
+builder.Services.AddScoped<ISensorRepository, SensorRepository>();
+builder.Services.AddScoped<ISensorManager, SensorManager>();
 
-builder.Services.AddTransient<IGateNameUniquePolicy, GateNameUniquePolicy>();
+builder.Services.AddScoped<IGateNameUniquePolicy, GateNameUniquePolicy>();
 
-builder.Services.AddTransient<IGuidGenerator, GuidGenerator>();
+builder.Services.AddScoped<IGuidGenerator, GuidGenerator>();
 
-builder.Services.AddTransient<ICacheService, CacheService>();
-builder.Services.AddTransient<ITokenService, TokenService>();
+builder.Services.AddScoped<ICacheService, CacheService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+builder.Services.AddScoped<IGateEntryExitBackgroundJobService, GateEntryExitBackgroundJobService>();
+
+builder.Services.AddHangfire(configuration => configuration
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
+
+builder.Services.AddHangfireServer();
+
 
 // Serilog
 configureLogging();
@@ -128,6 +143,21 @@ builder.Services.AddAuthentication(opt => {
 
 var app = builder.Build();
 
+app.UseHangfireDashboard(builder.Configuration.GetSection("Hangfire:DashboardPath").Value.ToString(), new DashboardOptions
+{
+    DashboardTitle = builder.Configuration.GetSection("Hangfire:DashboardTitle").Value.ToString(),
+    DarkModeEnabled = false,
+    DisplayStorageConnectionString = false,
+    Authorization = new[]
+    {
+        new HangfireCustomBasicAuthenticationFilter
+        {
+            User = builder.Configuration.GetSection("Hangfire:DashboardUserName").Value.ToString(),
+            Pass = builder.Configuration.GetSection("Hangfire:DashboardPassword").Value.ToString()
+        }
+    }
+});
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -135,12 +165,29 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+app.UseRouting();
 app.UseCors(MyAllowSpecificOrigins);
-
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+//app.MapControllers();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapHangfireDashboard();
+});
+
+RecurringJob.AddOrUpdate<GateEntryExitBackgroundJob>("GateEntryExitJob",
+    job => job.Execute(),
+    builder.Configuration.GetSection("Hangfire:CronExpression").Value.ToString(),
+    new RecurringJobOptions
+    {
+        TimeZone = TimeZoneInfo.FindSystemTimeZoneById("AUS Eastern Standard Time")
+    });
+
+GlobalJobFilters.Filters.Add(new BackgroundJobPauseFilter());
+BackgroundJobPauseFilter.IsPaused = builder.Configuration.GetValue<bool>("Hangfire:Pausejobs");
 
 app.Run();
 
