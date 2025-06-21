@@ -5,6 +5,8 @@ VisualStudioVersion = 17.7.34003.232
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GateEntryExit", "GateEntryExit.csproj", "{8C10FFD4-0914-4E86-8658-9433225A34DD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GateEntryExit.Test", "..\GateEntryExit.Test\GateEntryExit.Test.csproj", "{A7A26F11-7BE6-4EAD-AB8E-0F5C7EF5F0FA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{8C10FFD4-0914-4E86-8658-9433225A34DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C10FFD4-0914-4E86-8658-9433225A34DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C10FFD4-0914-4E86-8658-9433225A34DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7A26F11-7BE6-4EAD-AB8E-0F5C7EF5F0FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7A26F11-7BE6-4EAD-AB8E-0F5C7EF5F0FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7A26F11-7BE6-4EAD-AB8E-0F5C7EF5F0FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7A26F11-7BE6-4EAD-AB8E-0F5C7EF5F0FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
