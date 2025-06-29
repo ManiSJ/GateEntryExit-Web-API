@@ -186,6 +186,9 @@ RecurringJob.AddOrUpdate<GateEntryExitBackgroundJob>("GateEntryExitJob",
         TimeZone = TimeZoneInfo.FindSystemTimeZoneById("AUS Eastern Standard Time")
     });
 
+GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = 0, OnAttemptsExceeded = AttemptsExceededAction.Delete });
+GlobalJobFilters.Filters.Add(new PreventDuplicateEnqueueFilter());
+GlobalJobFilters.Filters.Add(new PreventDuplicateProcessingFilter());
 GlobalJobFilters.Filters.Add(new BackgroundJobPauseFilter());
 BackgroundJobPauseFilter.IsPaused = builder.Configuration.GetValue<bool>("Hangfire:Pausejobs");
 
