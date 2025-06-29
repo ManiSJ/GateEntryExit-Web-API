@@ -12,7 +12,8 @@ namespace GateEntryExit.BackgroundJobs
             _gateEntryExitBackgroundJobService = gateEntryExitBackgroundJobService;
         }
 
-        [AutomaticRetry(Attempts =0)]
+        //Commented below line as doing in program.cs in global filter
+        //[AutomaticRetry(Attempts =0)]
         [DisableConcurrentExecution(timeoutInSeconds: 300)]
         public void Execute()
         {
