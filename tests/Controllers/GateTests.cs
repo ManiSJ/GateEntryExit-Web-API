@@ -9,25 +9,24 @@ using System.Threading.Tasks;
 
 namespace GateEntryExit.Test.Controllers
 {
-    public class GateTests : IClassFixture<TestAppFactory>
+    [Collection("Common Test Collection")]
+    public class GateTests : IClassFixture<InProcessFactory>
     {
-        private readonly TestAppFactory _factory;
+        private readonly ITestWay _testWay;
         private readonly GateEntryExitDbContext _gateEntryExitDBContext;
         private HttpClient _httpClient { get; }
 
-        public GateTests(TestAppFactory factory)
+        public GateTests(CommonFixture commonFixture)
         {
-            _factory = factory;
-            var scope = _factory.Services.CreateScope();
-            var serviceProvider = scope.ServiceProvider;
+            _testWay = commonFixture._testWay;
 
-            _gateEntryExitDBContext = serviceProvider.GetRequiredService<GateEntryExitDbContext>();
+            //_gateEntryExitDBContext = serviceProvider.GetRequiredService<GateEntryExitDbContext>();
 
             // Use this client to do(SendAsync) api call after creating HttpRequestMessage, read response from HttpResponseMessage
-            _httpClient = _factory.CreateClient();
+            _httpClient = _testWay.CreateClient();
 
             // To make sure appsettings.test.json db connection came here
-            var connectionString = _gateEntryExitDBContext.Database.GetConnectionString();
+            //var connectionString = _gateEntryExitDBContext.Database.GetConnectionString();
         }
 
         [Fact]

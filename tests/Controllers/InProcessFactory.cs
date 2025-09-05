@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GateEntryExit.Test.Controllers
 {
-    public class TestAppFactory : WebApplicationFactory<Program>
+    public class InProcessFactory : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
