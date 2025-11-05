@@ -10,18 +10,22 @@ using GateEntryExit.Repositories;
 using GateEntryExit.Repositories.Interfaces;
 using GateEntryExit.Service.Cache;
 using GateEntryExit.Service.Token;
+using GateEntryExit.SignalR;
 using Hangfire;
 using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Scryber.Components;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Sinks.Elasticsearch;
 using System.Reflection;
 using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -138,9 +142,46 @@ builder.Services.AddAuthentication(opt => {
         ValidIssuer = JWTSetting["ValidIssuer"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JWTSetting.GetSection("securityKey").Value!))
     };
+    opt.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            // Log the error or respond with a custom message
+            Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+
+            // Optional: return a custom response
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+            return context.Response.WriteAsync(new
+            {
+                StatusCode = 401,
+                Message = "Authentication failed",
+                Detailed = context.Exception?.Message
+            }.ToString()); // Replace with proper JSON serializer
+        },
+        OnMessageReceived = context =>
+        {
+            // 1. Try to get the access token from the query string
+            var accessToken = context.Request.Query["access_token"];
+
+            // 2. Check if the path is for a specific endpoint (like SignalR)
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+            path.StartsWithSegments("/signalRHub"))
+            {
+                // 3.If we found a token and it's for the expected path, set it manually so the JWT middleware can validate it.
+
+                // This line manually assigns the token(extracted from somewhere other than the standard Authorization
+                // header) to the JWT authentication context. Once set, ASP.NET Core’s JWT middleware will use this token
+                // for validation — just like it would if it came from the Authorization: Bearer<token> header.
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
-
-
+builder.Services.AddSignalR();
 var app = builder.Build();
 
 app.UseHangfireDashboard(builder.Configuration.GetSection("Hangfire:DashboardPath").Value.ToString(), new DashboardOptions
@@ -176,6 +217,7 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
     endpoints.MapHangfireDashboard();
+    endpoints.MapHub<SignalRHub>("/signalRHub");
 });
 
 RecurringJob.AddOrUpdate<GateEntryExitBackgroundJob>("GateEntryExitJob",
