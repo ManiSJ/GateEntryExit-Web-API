@@ -223,3 +223,5 @@ ElasticsearchSinkOptions configureElasticSink(IConfigurationRoot configuration, 
         NumberOfShards = 2
     };
 }
+
+public partial class Program { }
