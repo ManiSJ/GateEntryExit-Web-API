@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  gateentryexit:
+    image: ${DOCKER_REGISTRY-}gateentryexit
+    build:
+      context: .
+      dockerfile: src/Dockerfile
