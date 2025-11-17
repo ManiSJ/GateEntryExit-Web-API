@@ -6,6 +6,7 @@ using GateEntryExit.Domain;
 using GateEntryExit.Domain.Manager;
 using GateEntryExit.Domain.Policy;
 using GateEntryExit.Helper;
+using GateEntryExit.Middlewares;
 using GateEntryExit.Repositories;
 using GateEntryExit.Repositories.Interfaces;
 using GateEntryExit.Service.Cache;
@@ -198,6 +199,8 @@ app.UseHangfireDashboard(builder.Configuration.GetSection("Hangfire:DashboardPat
         }
     }
 });
+
+app.UseMiddleware<HttpContextMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
