@@ -3,7 +3,7 @@
 namespace GateEntryExit.Attributes
 {
     // How to use this converter? In any property like below
-    // [DateTimeValidator("Bla")]
+    // [DateTimeValidator("Bla - a string parameter which is passed")]
     // public string? DateTime { get; set; } 
     #region
     // Used string type above not dateTime because datetime in json will be a string if used dateTime it will 

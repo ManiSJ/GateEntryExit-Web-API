@@ -1,3 +1,4 @@
+using FluentValidation;
 using GateEntryExit.BackgroundJobs;
 using GateEntryExit.BackgroundJobServices.Implementations;
 using GateEntryExit.BackgroundJobServices.Interfaces;
@@ -5,6 +6,7 @@ using GateEntryExit.DatabaseContext;
 using GateEntryExit.Domain;
 using GateEntryExit.Domain.Manager;
 using GateEntryExit.Domain.Policy;
+using GateEntryExit.Dtos.Gate;
 using GateEntryExit.Helper;
 using GateEntryExit.Middlewares;
 using GateEntryExit.Repositories;
@@ -12,6 +14,7 @@ using GateEntryExit.Repositories.Interfaces;
 using GateEntryExit.Service.Cache;
 using GateEntryExit.Service.Token;
 using GateEntryExit.SignalR;
+using GateEntryExit.Validators;
 using Hangfire;
 using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -103,6 +106,8 @@ builder.Services.AddScoped<ISensorRepository, SensorRepository>();
 builder.Services.AddScoped<ISensorManager, SensorManager>();
 
 builder.Services.AddScoped<IGateNameUniquePolicy, GateNameUniquePolicy>();
+
+builder.Services.AddScoped<IValidator<CreateGateDto>, GateValidator>();
 
 builder.Services.AddScoped<IGuidGenerator, GuidGenerator>();
 
