@@ -2,6 +2,7 @@ using FluentValidation;
 using GateEntryExit.BackgroundJobs;
 using GateEntryExit.BackgroundJobServices.Implementations;
 using GateEntryExit.BackgroundJobServices.Interfaces;
+using GateEntryExit.Caching;
 using GateEntryExit.DatabaseContext;
 using GateEntryExit.Domain;
 using GateEntryExit.Domain.Manager;
@@ -20,6 +21,7 @@ using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -187,6 +189,13 @@ builder.Services.AddAuthentication(opt => {
         }
     };
 });
+
+var cachedData = new CachedData { GateKey = "secret" };
+CachedDataHelper.SaveSecretsToFile(cachedData, "secrets.cache");
+// Later can load cached data like
+// CachedDataHelper.LoadSecretFromFule("secrets.cache");
+builder.Services.AddSingleton<ICachedDataProvider>(new CachedDataProvider(cachedData));
+builder.Services.AddSingleton<IUserIdProvider, UserIdProvider>();
 builder.Services.AddSignalR();
 var app = builder.Build();
 
