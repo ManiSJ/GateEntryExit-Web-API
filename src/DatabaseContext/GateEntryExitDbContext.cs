@@ -27,7 +27,7 @@ namespace GateEntryExit.DatabaseContext
 
             modelBuilder.Entity<Gate>(entity =>
             {
-                entity.Property(g => g.Name).IsRequired().HasMaxLength(50);
+                entity.Property(g => g.Name).IsRequired();
 
                 entity.HasIndex(e => e.Name).IsUnique();
 

@@ -1,3 +1,5 @@
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using FluentValidation;
 using GateEntryExit.BackgroundJobs;
 using GateEntryExit.BackgroundJobServices.Implementations;
@@ -20,23 +22,40 @@ using GateEntryExit.Validators;
 using Hangfire;
 using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Scryber.Components;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Sinks.Elasticsearch;
 using System.Reflection;
 using System.Text;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var JWTSetting = builder.Configuration.GetSection("JWTSetting");
+
+try
+{
+    var clientId = "";
+    var tenantId = "";
+    var clientSecret = "";
+    // Create Azure_KeyVault_Name in system environ varaibles.
+    // In IIS each login user into the machine can have their own environ variables, then when app run under that user his/her envirn variables used.
+    var keyVaultName = Environment.GetEnvironmentVariable("Azure_KeyVault_Name");
+    var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+    var client = new SecretClient(new Uri($"https://{keyVaultName}.vault.azure.net/"), credential);
+    var secretFromAzure = client.GetSecret("AnySecretName").Value.Value;
+    // Can do like below later to cache the secret
+    // var cachedData = new CachedData { GateKey = secretFromAzure };
+    // CachedDataHelper.SaveSecretsToFile(cachedData, "secrets.cache");
+}
+catch (Exception ex)
+{
+
+}
 
 // Add services to the container.
 
