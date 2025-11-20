@@ -7,6 +7,7 @@ using GateEntryExit.Helper;
 using GateEntryExit.Repositories;
 using GateEntryExit.Repositories.Interfaces;
 using GateEntryExit.Service.Cache;
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -115,6 +116,10 @@ namespace GateEntryExit.Controllers
                 Id = gate.Id
             };
             _cacheService.SetData<GateDto>(cacheKey, cacheData, DateTime.Now.AddSeconds(30));
+
+            // Mapster way to convert Gate entity to GateDto
+            // var gateDto = gate.Adapt<GateDto>();
+            // return gateDto;
 
             return cacheData;
         }

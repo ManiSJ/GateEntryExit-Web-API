@@ -9,6 +9,7 @@ using GateEntryExit.Domain.Manager;
 using GateEntryExit.Domain.Policy;
 using GateEntryExit.Dtos.Gate;
 using GateEntryExit.Helper;
+using GateEntryExit.Mapster;
 using GateEntryExit.Middlewares;
 using GateEntryExit.Repositories;
 using GateEntryExit.Repositories.Interfaces;
@@ -111,6 +112,8 @@ builder.Services.AddScoped<IGateNameUniquePolicy, GateNameUniquePolicy>();
 
 builder.Services.AddScoped<IValidator<CreateGateDto>, GateValidator>();
 
+MapsterMappingConfig.ConfigureMappings();
+
 builder.Services.AddScoped<IGuidGenerator, GuidGenerator>();
 
 builder.Services.AddScoped<ICacheService, CacheService>();
@@ -129,7 +132,20 @@ builder.Services.AddHangfireServer();
 
 // Serilog
 configureLogging();
-builder.Host.UseSerilog();
+builder.Host.UseSerilog((context,services, loggerConfiguration) =>
+{
+    loggerConfiguration.ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services);
+
+    // this part you can comment/remove WriteTo MSSqlServer under Serilog in appsettings.json then can set using secret from AzureKeyVault
+    loggerConfiguration.WriteTo.MSSqlServer(
+        connectionString : "Connection string from azure key vault",
+        sinkOptions: new Serilog.Sinks.MSSqlServer.MSSqlServerSinkOptions
+        {
+            TableName = "Logs",
+            AutoCreateSqlTable = true
+        });
+});
 
 // JWT
 // https://code-maze.com/authentication-aspnetcore-jwt-1/
@@ -215,6 +231,7 @@ app.UseHangfireDashboard(builder.Configuration.GetSection("Hangfire:DashboardPat
 });
 
 app.UseMiddleware<HttpContextMiddleware>();
+app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
